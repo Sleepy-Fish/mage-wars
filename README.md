@@ -1,4 +1,4 @@
-# BLIP CONQUEST
+# MAGE WARS
 A war of mages
 
 ### Development
