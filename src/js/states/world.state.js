@@ -4,12 +4,10 @@ import Char from '../entities/char';
 export default class WorldState extends GameState{
     constructor(app){
         super(app);
-        this.mage = new Char(this.scene, {
-            position:{x:200, y: 300}
+        this.mage = new Char(this.scene, window.game.input.Keyboard, {
+            position:{x:200, y: 300},
+            movementType: 'wasd'
         });
-        setTimeout(()=>{
-            this.mage.direction = 'left';
-        },5000)
     }
     run(delta){
         super.run(delta);

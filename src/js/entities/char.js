@@ -1,5 +1,5 @@
 export default class Char {
-    constructor(container, options){
+    constructor(container, keyboard, options){
         this.container = container;
         //Sprite initialization
         this._downFrames = [PIXI.Texture.fromFrame('d1.png'), PIXI.Texture.fromFrame('d2.png'), PIXI.Texture.fromFrame('d3.png')];
@@ -7,44 +7,55 @@ export default class Char {
         this._leftFrames = [PIXI.Texture.fromFrame('l1.png'), PIXI.Texture.fromFrame('l2.png'), PIXI.Texture.fromFrame('l3.png')];
         this._rightFrames = [PIXI.Texture.fromFrame('r1.png'), PIXI.Texture.fromFrame('r2.png'), PIXI.Texture.fromFrame('r3.png')];
 
-        this._animation = new PIXI.extras.AnimatedSprite(this._downFrames);
-        this._animation.anchor.set(0.5,0.5);
-        this._animation.x = options.position.x||0;
-        this._animation.y = options.position.y||0;
-        this._animation.animationSpeed = 0.2;
-        this._animation.play();
-        this.container.addChild(this._animation);
+        this._sprite = new PIXI.extras.AnimatedSprite(this._downFrames);
+        this._sprite.anchor.set(0.5,0.5);
+        this._sprite.x = options.position.x||0;
+        this._sprite.y = options.position.y||0;
+        this._sprite.animationSpeed = 0.2;
+        this._sprite.play();
+        this.container.addChild(this._sprite);
 
         this._velocity = {x:0,y:0};
-        this._speed = 5;
-        window.game.input.Keyboard.subscribe('w','press',()=>{
-            this.direction = 'up';
-            this._velocity.y-=this._speed;
-        });
-        window.game.input.Keyboard.subscribe('a','press',()=>{
-            this.direction = 'left';
-            this._velocity.x-=this._speed;
-        });
-        window.game.input.Keyboard.subscribe('s','press',()=>{
-            this.direction = 'down';
-            this._velocity.y+=this._speed;
-        });
-        window.game.input.Keyboard.subscribe('d','press',()=>{
-            this.direction = 'right';
-            this._velocity.x+=this._speed;
-        });
-        window.game.input.Keyboard.subscribe('w','release',()=>{
-            this._velocity.y+=this._speed;
-        });
-        window.game.input.Keyboard.subscribe('a','release',()=>{
-            this._velocity.x+=this._speed;
-        });
-        window.game.input.Keyboard.subscribe('s','release',()=>{
-            this._velocity.y-=this._speed;
-        });
-        window.game.input.Keyboard.subscribe('d','release',()=>{
-            this._velocity.x-=this._speed;
-        });
+        this._speed = 12;
+        this._acceleration = 0.5;
+
+        this._directions = {
+            'up':false,
+            'down':false,
+            'left':false,
+            'right':false
+        }
+
+        if(options.movementType==='wasd'){
+            keyboard.subscribe('w','press',()=>{
+                this._directions.up = true;
+                this.direction = 'up';
+            });
+            keyboard.subscribe('a','press',()=>{
+                this._directions.left = true;
+                this.direction = 'left';
+            });
+            keyboard.subscribe('s','press',()=>{
+                this._directions.down = true;
+                this.direction = 'down';
+            });
+            keyboard.subscribe('d','press',()=>{
+                this._directions.right = true;
+                this.direction = 'right';
+            });
+            keyboard.subscribe('w','release',()=>{
+                this._directions.up = false;
+            });
+            keyboard.subscribe('a','release',()=>{
+                this._directions.left = false;
+            });
+            keyboard.subscribe('s','release',()=>{
+                this._directions.down = false;
+            });
+            keyboard.subscribe('d','release',()=>{
+                this._directions.right = false;
+            });
+        }
     }
     get x(){
         return this.sprite.x;
@@ -52,14 +63,10 @@ export default class Char {
     get y(){
         return this.sprite.y;
     }
-    get direction(){
-        return this._direction;
-    }
     set direction(dir){
         if(!['up','down','left','right'].includes(dir)) throw Error(`${dir} not valid direction`);
-        this._direction = dir;
-        this._animation.textures = this[`_${dir}Frames`];
-        this._animation.play();
+        this._sprite.textures = this[`_${dir}Frames`];
+        this._sprite.play();
     }
     activate(){
 
@@ -68,7 +75,33 @@ export default class Char {
 
     }
     update(){
-        this._animation.x+=this._velocity.x;
-        this._animation.y+=this._velocity.y;
+        if(this._directions.up) this._velocity.y = (this._velocity.y - this._acceleration).clamp(-this._speed,this._speed);
+        if(this._directions.down) this._velocity.y = (this._velocity.y + this._acceleration).clamp(-this._speed,this._speed);
+        if(!(this._directions.up || this._directions.down) && this._velocity.y != 0){
+            if(this._velocity.y > this._acceleration){
+                this._velocity.y -= this._acceleration;
+            } else if(this._velocity.y < this._acceleration){
+                this._velocity.y += this._acceleration;
+            } else {
+                this._velocity.y = 0;
+            }
+        }
+        if(this._directions.left) this._velocity.x = (this._velocity.x - this._acceleration).clamp(-this._speed,this._speed);
+        if(this._directions.right) this._velocity.x = (this._velocity.x + this._acceleration).clamp(-this._speed,this._speed);
+        if(!(this._directions.left || this._directions.right) && this._velocity.x != 0){
+            if(this._velocity.x > this._acceleration){
+                this._velocity.x -= this._acceleration;
+            } else if(this._velocity.x < this._acceleration){
+                this._velocity.x += this._acceleration;
+            } else {
+                this._velocity.x = 0;
+            }
+        }
+        if(this._sprite.playing && !(this._directions.up||this._directions.down||this._directions.left||this._directions.right)){
+            this._sprite.stop();
+        }
+
+        this._sprite.x+=this._velocity.x;
+        this._sprite.y+=this._velocity.y;
     }
 }
