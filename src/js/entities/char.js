@@ -1,6 +1,9 @@
+import Bump from '../bump';
+
 export default class Char {
     constructor(container, keyboard, options){
         this.container = container;
+        this.bump = new Bump(PIXI);
         //Sprite initialization
         this._downFrames = [PIXI.Texture.fromFrame('d1.png'), PIXI.Texture.fromFrame('d2.png'), PIXI.Texture.fromFrame('d3.png')];
         this._upFrames = [PIXI.Texture.fromFrame('u1.png'), PIXI.Texture.fromFrame('u2.png'), PIXI.Texture.fromFrame('u3.png')];
@@ -25,6 +28,8 @@ export default class Char {
             'left':false,
             'right':false
         }
+
+        this._boundingBoxes = options.boundingBoxes;
 
         if(options.movementType==='wasd'){
             keyboard.subscribe('w','press',()=>{
@@ -99,6 +104,31 @@ export default class Char {
         }
         if(this._sprite.playing && !(this._directions.up||this._directions.down||this._directions.left||this._directions.right)){
             this._sprite.stop();
+        }
+
+        for(let box of this._boundingBoxes){
+            if(this.bump.hitTestRectangle(this._sprite, box)){
+                let dx = Math.abs(this._sprite.x-box.centerX);
+                let dy = Math.abs(this._sprite.y-box.centerY);
+                let sb = this._sprite.getBounds();
+                if(dx >= dy){//horizontal
+                    this._velocity.x = -this._velocity.x;
+                    if(sb.left < box.right && sb.right > box.right){
+                        console.log('left')
+                    } else {
+                        console.log('right')
+                    }
+                } else {//vertical
+                    this._velocity.y = -this._velocity.y;
+                    if(sb.top < box.bottom && sb.bottom > box.bottom){
+                        console.log('top')
+                    } else {
+                        console.log('bottom');
+                    }
+                }
+                break;
+            }
+            
         }
 
         this._sprite.x+=this._velocity.x;

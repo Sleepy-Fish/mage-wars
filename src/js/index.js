@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import config from './app-config';
-import loader from './loader'
+import loader from './loader';
 import MenuState from './states/menu.state';
 import WorldState from './states/world.state';
 import Input from './input';
@@ -32,6 +32,7 @@ function progress(loader, resource){
 
 function setup(loader, resources){
     window.game = {}
+    window.game.workingOn = "Making Collision Not Shitty";
     window.game.input = new Input(app);
     window.game.states = {
         menu: new MenuState(app),
@@ -49,6 +50,6 @@ function setup(loader, resources){
         window.game.input.update();
         window.game.state.run(delta);
     };
-    window.game.setState('menu');
+    window.game.setState('world');
     app.ticker.add(delta=>window.game.loop(delta));
 }
